@@ -13,7 +13,8 @@ def healthchek(request):
 
 @api.get("/profile", auth=CustomAuth(), response=ProfileSchema)
 def profileview(request):
-    phone= request.auth
+    user= request.auth
+    phone=user["phone"]
     prof = get_object_or_404(EmberUser, phone=phone)
     return {"phone": prof.phone, "location": prof.location, "role": prof.role}
 
