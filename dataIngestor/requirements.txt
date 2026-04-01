@@ -3,3 +3,4 @@ uvicorn
 google-cloud-pubsub
 requests
 python-dotenv
+asyncio

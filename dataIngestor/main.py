@@ -12,6 +12,8 @@ from utils.signals import compute_signals
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 load_dotenv()
+import random 
+import asyncio
 from fastapi import FastAPI
 app = FastAPI()
 
