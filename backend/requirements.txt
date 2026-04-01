@@ -1,3 +1,6 @@
 django
 django-ninja
 django-phonenumber-field[phonenumbers]
+python-dotenv
+requests
+python-jose
