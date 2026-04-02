@@ -9,6 +9,9 @@ import logging
 from utils.fetch_weath import fetch_weather
 from utils.fetch_sat import fetch_satellite
 from utils.signals import compute_signals
+from utils.hydrology import estimate_hydro
+from utils.geo_mapping import get_geo_features
+from utils.fetch_elev import fetch_elevation
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -63,13 +66,27 @@ async def ingest_loop():
                 else:
                     weather = fetch_weather(region["lat"], region["lon"])
                     sat = fetch_satellite(region["lat"], region["lon"])
+                    elev = fetch_elevation(region["lat"], region["lon"])
+                    geo = get_geo_features(region["name"])
+                    hydro = estimate_hydro(weather["rainfall"], elev)
                     signals = compute_signals(weather, sat)
                     data = {
                         "region": region["name"],
                         "timestamp": datetime.utcnow().isoformat(),
-                        **weather,
-                        **sat,
-                        **signals,
+                        "Rainfall_mm": weather["rainfall"],
+                        "Temperature_C": weather["temperature"],
+                        "Humidity_pct": weather["humidity"],
+                        "Satellite_Rainfall": sat["satellite_rainfall"],
+                        "River_Discharge_m3_s": hydro["river_discharge"],
+                        "Water_Level_m": hydro["water_level"],
+                        "Elevation_m": elev,
+                        "Land_Cover": geo["land_cover"],
+                        "Soil_Type": geo["soil_type"],
+                        "Population_Density": 300,
+                        "Infrastructure": 0,
+                        "Historical_Floods": 1,
+                        "Latitude": region["lat"],
+                        "Longitude": region["lon"]
                     }
                 publish(data)
             except Exception as e:
