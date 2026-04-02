@@ -22,7 +22,7 @@ def callback(message: pubsub_v1.subscriber.message.Message):
         data=json.loads(message.data.decode("utf-8"))
         logger.info(f"data: {data}")
         res = predict_risk(data)
-        output = {"region": data["region"], "timestamp": data["timestamp"], **res}
+        output = {"region": data["region"], "timestamp": data["timestamp"], "latitude": data["latitude"], "longitude": data["longitude"], **res}
         publisher.publish(ml_topic_path, json.dumps(output).encode("utf-8"))
         logger.info(f"ML result: {output}")
         message.ack()
@@ -42,6 +42,6 @@ def start_sub():
 
 @app.get("/health")
 def chek():
-    return {"status": "RUNNING"}
+    return {"status": ""}
 
 
