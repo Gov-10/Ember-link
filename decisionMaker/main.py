@@ -13,7 +13,9 @@ publisher = pubsub_v1.PublisherClient()
 history_topic_path = publisher.topic_path(PROJECT_ID, HISTORY_TOPIC)
 subscriber=pubsub_v1.SubscriberClient()
 subscription_path = subscriber.subscription_path(PROJECT_ID, EVAC_SUB)
+from utils.sms_send import send_mess
 from langchain_groq import ChatGroq
+import requests
 
 #NOTE: GROQ API Key set karna baaki hai bhai
 
@@ -45,6 +47,14 @@ def msg_ngo(region, risk, ngo, population):
     """
     msg= llm.invoke(prompt)
     return msg.content
+NINJA_API_URL=os.getenv("NINJA_API_URL")
+def get_users():
+    try:
+        resp=requests.get(f"{NINJA_API_URL}/users?role=user")
+        return list(resp.json())
+    except Exception as e:
+        logger.error(f"error: {e}")
+        return []
 
 def callback(message):
     try:
@@ -57,12 +67,17 @@ def callback(message):
         instruction=data.get("instructions")
         ngos= data.get("ngos")
         population=300
-        #idhar iterate through list, make custom messages aur send sms-> PENDING
+        for ngo in ngos:
+            aim=msg_ngo(region, risk, ngo,population)
+            send_mess(ngo["phone"], aim)
         msg=message_gen(region, risk, shelter, instruction)
         output={"region": region, "risk_level": risk, "message": msg, "route": route, "target_shelter": shelter, "status": "NOTIFIED"}
         publisher.publish(history_topic_path, json.dumps(output).encode("utf-8"))
         logger.info(f"AI message: {msg}")
         message.ack()
+        users=get_users()
+        for user in users:
+            send_mess(user["phone"], msg)
 
         #TODO: Idhar SMS ka code likhna baaki hai
     except Exception as e:
