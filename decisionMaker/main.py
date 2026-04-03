@@ -37,6 +37,14 @@ def message_gen(region, risk, shelter, instruction):
     """
     msg= llm.invoke(prompt)
     return msg.content
+def msg_ngo(region, risk, ngo, population):
+    prompt = f"""  
+            Context: A {risk} risk disaster is occuring in {region} with {population} density.
+            Task: Draft a short SMS for a ngo with {ngo["ambulances"]} ambulances, {ngo["food_pac"]} food packets, {ngo["volunteers"]} volunteers, on how many vehicles to send, how many food packets to dispatch and how many volunteers to dispatch.
+            Make it urgent but calm
+    """
+    msg= llm.invoke(prompt)
+    return msg.content
 
 def callback(message):
     try:
@@ -47,11 +55,15 @@ def callback(message):
         route=data.get("route_coords")
         shelter=data.get("target_shelter")
         instruction=data.get("instructions")
+        ngos= data.get("ngos")
+        population=300
+        #idhar iterate through list, make custom messages aur send sms-> PENDING
         msg=message_gen(region, risk, shelter, instruction)
         output={"region": region, "risk_level": risk, "message": msg, "route": route, "target_shelter": shelter, "status": "NOTIFIED"}
         publisher.publish(history_topic_path, json.dumps(output).encode("utf-8"))
         logger.info(f"AI message: {msg}")
         message.ack()
+
         #TODO: Idhar SMS ka code likhna baaki hai
     except Exception as e:
         logger.error(f"Error: {e}")

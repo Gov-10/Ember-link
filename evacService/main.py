@@ -32,6 +32,13 @@ def get_safe_shelters(region):
     except Exception as e:
         logger.error(f"DB Fetch Error: {e}")
         return []
+def get_ngos(region):
+    try:
+        response=requests.get(f"{NINJA_API_URL}/ngos")
+        return response.json()
+    except Exception as e:
+        logger.error(str(e))
+        return []
 
 def block_flooded_roads(G, flood_coords, radius=800):
     try:
@@ -82,6 +89,7 @@ def callback(message):
             message.ack()
             return
         shelters = get_safe_shelters(region)
+        ngos=get_ngos()
         if not shelters:
             logger.warning("No shelters available")
             message.ack()
@@ -107,11 +115,12 @@ def callback(message):
             for n in route
         ]
         output = {
-            "risk": data.get("res") 
+            "risk": data.get("res"),
             "region": region,
             "target_shelter": target['name'],
             "distance_m": distance,
             "route": route_coords,
+            "ngos": ngos,
             "instructions": f"Proceed to {target['name']}. Distance: {round(distance/1000, 2)} km"
         }
         publisher.publish(
