@@ -1,6 +1,6 @@
 from ninja import NinjaAPI
 import os
-from .schema import ProfileSchema, ShelterSchema, FillSchema
+from .schema import ProfileSchema, ShelterSchema, FillSchema, NgoSchema, EmberSchema
 from .models import EmberUser,Shelter, NGOProfile
 from typing import List
 from django.shortcuts import get_object_or_404
