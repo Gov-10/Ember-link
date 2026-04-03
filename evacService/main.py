@@ -71,7 +71,7 @@ def calculate_evac_route(G, start_coords, shelters):
 def callback(message):
     try:
         data = json.loads(message.data.decode("utf-8"))
-        if data.get("risk_level") != "HIGH":
+        if data.get("res") != "HIGH":
             message.ack()
             return
         region = data.get("region")
@@ -107,6 +107,7 @@ def callback(message):
             for n in route
         ]
         output = {
+            "risk": data.get("res") 
             "region": region,
             "target_shelter": target['name'],
             "distance_m": distance,
