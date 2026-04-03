@@ -78,8 +78,6 @@ def callback(message):
         users=get_users()
         for user in users:
             send_mess(user["phone"], msg)
-
-        #TODO: Idhar SMS ka code likhna baaki hai
     except Exception as e:
         logger.error(f"Error: {e}")
         message.nack()
