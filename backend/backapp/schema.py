@@ -6,6 +6,7 @@ class ProfileSchema(Schema):
    location:Optional[str]=None
    role:str
 
+   
 class ShelterSchema(Schema):
     name:str
     region:str

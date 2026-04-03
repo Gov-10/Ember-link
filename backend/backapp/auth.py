@@ -40,7 +40,7 @@ class CustomAuth(HttpBearer):
             phone = claims.get("phone_number", "")
             groups= claims.get("cognito:groups", [])
             role= "ngo" if "ngos" in groups else "user"
-            user, _ = IntelliUser.objects.get_or_create(
+            user, _ = EmberUser.objects.get_or_create(
             cognito_sub=sub,
             defaults={"phone": phone, "role": role}
         )

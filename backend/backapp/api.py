@@ -12,6 +12,10 @@ api = NinjaAPI()
 def healthchek(request):
     return {"status": "RUNNING"}
 
+@api.get("/hola", auth=CustomAuth())
+def chek(request):
+    return {"hola": "bye"}
+
 #TODO:  chathistory endpoint
 
 @api.post("/fill", auth=CustomAuth())
@@ -31,7 +35,7 @@ def fillNgo(request, payload:FillSchema):
 @api.get("/profile", auth=CustomAuth(), response=ProfileSchema)
 def profileview(request):
     user= request.auth
-    phone=user["phone"]
+    phone=user.phone
     prof = get_object_or_404(EmberUser, phone=phone)
     return {"phone": prof.phone, "location": prof.location, "role": prof.role}
 
