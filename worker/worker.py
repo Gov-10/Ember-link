@@ -22,20 +22,6 @@ redis_client = redis.Redis(
     password=os.getenv("REDIS_PASSWORD"),
     decode_responses=True
 )
-def callback(message):
-    try:
-        data=json.loads(message.data.decode("utf-8"))
-        region = data.get("region")
-        msg=data.get("message")
-        route=data.get("route")
-        risk=data.get("risk_level")
-        status=data.get("status")
-        target_shelter=data.get("target_shelter")
-        dt = {"region":region,"message":msg,"route":route,"risk":risk,"status":status,"target_shelter":target_shelter}
-        message.ack()
-    except Exception as e:
-        logger.error(str(e))
-        message.nack()
 def publish_update(region, data):
     redis_client.set(
         f"flood:latest:{region}",
@@ -49,6 +35,23 @@ def publish_update(region, data):
             "data": data
         }
     )
+
+def callback(message):
+    try:
+        data=json.loads(message.data.decode("utf-8"))
+        region = data.get("region")
+        msg=data.get("message")
+        route=data.get("route")
+        risk=data.get("risk_level")
+        status=data.get("status")
+        target_shelter=data.get("target_shelter")
+        dt = {"region":region,"message":msg,"route":route,"risk":risk,"status":status,"target_shelter":target_shelter}
+        publish_update(region, dt)
+        message.ack()
+    except Exception as e:
+        logger.error(str(e))
+        message.nack()
+
 
 @app.get("/health")
 def chek():

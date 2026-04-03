@@ -32,7 +32,7 @@ def get_safe_shelters(region):
     except Exception as e:
         logger.error(f"DB Fetch Error: {e}")
         return []
-def get_ngos(region):
+def get_ngos():
     try:
         response=requests.get(f"{NINJA_API_URL}/ngos")
         return response.json()
