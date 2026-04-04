@@ -9,3 +9,4 @@ channels-redis
 daphne
 whitenoise
 redis
+django-cors-headers
