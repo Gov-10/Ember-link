@@ -2,6 +2,11 @@
 **EmberLink** is an event-driven, AI-powered command center designed to navigate the chaos of urban flooding. By merging real-time sensor data with graph theory and Large Language Models (LLMs), it provides citizens and NGOs with the **safest** possible evacuation routes, not just the shortest ones.
 
 ### NOTE: Currently, for demo purposes, some sections of this project use Demo Data
+
+## Demo video
+[![Watch Demo](https://img.youtube.com/vi/VIDEO_ID/maxresdefault.jpg)](https://www.youtube.com/watch?v=IUFPjjRpaHs)
+(Please note that this video was recorded in Nagpur, hence the distance~970km)
+
 ## Architecture Diagram
 ![System Architecture](./docs/arc.png)
 
