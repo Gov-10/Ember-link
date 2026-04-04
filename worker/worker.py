@@ -1,4 +1,4 @@
-#TODO: pubsub subscriber code add karna-> pending
+
 import redis
 import json, os
 from dotenv import load_dotenv
@@ -11,7 +11,7 @@ app = FastAPI()
 logging.basicConfig(level=logging.INFO)
 logger=logging.getLogger(__name__)
 load_dotenv()
-credential_path="/home/govind/ember-link/bright-raceway-468304-e1-d7622ad6eb37.json"
+credential_path="/home/govind/Ember-link/bright-raceway-468304-e1-d7622ad6eb37.json"
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]=credential_path
 subscriber=pubsub_v1.SubscriberClient()
 subscription_path=os.getenv("FINAL_SUB")
@@ -28,28 +28,42 @@ def publish_update(region, data):
         json.dumps(data),
         ex=300
     )
-    async_to_sync(channel_layer.group_send)(
-        f"flood_{region}",
-        {
-            "type": "send_update",
-            "data": data
-        }
+    redis_client.publish(
+        f"flood:{region}",
+        json.dumps(data)
     )
 
 def callback(message):
     try:
-        data=json.loads(message.data.decode("utf-8"))
+        # 1. Data decode karo
+        raw_data = message.data.decode("utf-8")
+        data = json.loads(raw_data)
+        logger.info(f"Data aagya: {data}")
+        
         region = data.get("region")
-        msg=data.get("message")
-        route=data.get("route")
-        risk=data.get("risk_level")
-        status=data.get("status")
-        target_shelter=data.get("target_shelter")
-        dt = {"region":region,"message":msg,"route":route,"risk":risk,"status":status,"target_shelter":target_shelter}
+
+        # 2. Key names ko page.tsx ke hisaab se map karo
+        # IMPORTANT: Frontend risk_level dhoond raha hai, toh wahi key name rakho
+        dt = {
+            "region": region,
+            "message": data.get("message"), # Ye public message hai
+            "route": data.get("route"),
+            "risk_level": data.get("risk_level") or data.get("res") or "HIGH", # Dono handle ho gaye
+            "status": data.get("status"),
+            "target_shelter": data.get("target_shelter") or "TBD",
+            "distance_m": data.get("distance_m") or 0,
+            "instructions": data.get("instructions") or "No specific instructions yet",
+            # Agar NGO data (aim) bhej rahe ho toh ye line bhi zaroori hai:
+            "ngo_data": data.get("ngo_data", []) 
+        }
+
+        # 3. Redis update
         publish_update(region, dt)
+        logger.info(f"✅ PUSHED TO DJANGO: {region}")
         message.ack()
+
     except Exception as e:
-        logger.error(str(e))
+        logger.error(f"❌ Worker Error: {str(e)}")
         message.nack()
 
 

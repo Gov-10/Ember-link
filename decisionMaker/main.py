@@ -62,32 +62,56 @@ def get_users():
 
 def callback(message):
     try:
-        data=json.loads(message.data.decode("utf-8"))
+        data = json.loads(message.data.decode("utf-8"))
         
-        region=data.get("region")
-        risk=data.get("res")
-        route=data.get("route_coords")
-        shelter=data.get("target_shelter")
-        instruction=data.get("instructions")
-        population=300
-        ngos=get_ngos()
+        region = data.get("region")
+        risk = data.get("res")              # ML topic se 'res' aa raha hai
+        route = data.get("route_coords")    # Evac service se route
+        shelter = data.get("target_shelter")
+        instruction = data.get("instructions")
+        distance = data.get("distance_m")   # Frontend display ke liye
+        population = 300
+
+        # 1. NGO AI Messages (aim) generate karo
+        ngos = get_ngos()
+        ngo_updates = []
         for ngo in ngos:
-            aim=msg_ngo(region, risk, ngo,population)
-            print(aim)
-            logger.info("SMS SENT")
-            #send_mess(ngo["phone"], aim)
-        msg=message_gen(region, risk, shelter, instruction)
-        output={"region": region, "risk_level": risk, "message": msg, "route": route, "target_shelter": shelter, "status": "NOTIFIED"}
+            # NGO ke liye specific AI Message (aim)
+            aim = msg_ngo(region, risk, ngo, population) 
+            
+            ngo_updates.append({
+                "ngo_name": ngo.get("organization_name"),
+                "ngo_phone": ngo.get("phone"),
+                "aim": aim, # 🔥 Ye raha tumhara AI Message
+                "ambulances": ngo.get("ambulances"),
+                "food_packets": ngo.get("food_pac"),
+                "volunteers": ngo.get("volunteers")
+            })
+            # send_mess(ngo["phone"], aim)
+
+        # 2. General Public ke liye AI Message (msg)
+        msg = message_gen(region, risk, shelter, instruction)
+
+        # 3. Final Output (Jo Worker.py ko jayega)
+        output = {
+            "region": region, 
+            "risk_level": risk, 
+            "message": msg,           # Public message
+            "ngo_data": ngo_updates,  # 🔥 Saara NGO 'aim' aur numbers yahan hain
+            "route": route, 
+            "target_shelter": shelter, 
+            "distance_m": distance,
+            "instructions": instruction,
+            "status": "NOTIFIED"
+        }
+        
         publisher.publish(history_topic_path, json.dumps(output).encode("utf-8"))
-        logger.info(f"AI message: {msg}")
+        logger.info(f"✅ AI Messages (aim) sent for {region}")
         message.ack()
-        users=get_users()
-        for user in users:
-            #send_mess(user["phone"], msg)
-            logger.info("SMS SENT")
+
     except Exception as e:
-        logger.error(f"Error: {e}")
-        message.nack()
+        logger.error(f"Error in decisionMaker: {e}")
+        message.nack()     
 
 @app.on_event("startup")
 def start_sub():
