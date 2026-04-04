@@ -1,3 +1,7 @@
 python-dotenv
 redis
 channels
+fastapi
+uvicorn
+google-cloud-pubsub
+requests

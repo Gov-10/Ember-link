@@ -10,11 +10,11 @@ from fastapi import FastAPI
 app = FastAPI()
 logging.basicConfig(level=logging.INFO)
 logger=logging.getLogger(__name__)
-PROJECT_ID=os.getenv("PROJECT_ID")
-HISTORY_SUBSCRIPTION=os.getenv("HISTORY_SUBSCRIPTION")
-subscriber=pubsub_v1.SubscriberClient()
-subscription_path=subscriber.subscription_path(PROJECT_ID, HISTORY_SUBSCRIPTION)
 load_dotenv()
+credential_path="/home/govind/ember-link/bright-raceway-468304-e1-d7622ad6eb37.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"]=credential_path
+subscriber=pubsub_v1.SubscriberClient()
+subscription_path=os.getenv("FINAL_SUB")
 
 redis_client = redis.Redis(
     host=os.getenv("REDIS_HOST"),

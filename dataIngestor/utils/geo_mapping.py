@@ -1,3 +1,5 @@
+import requests
+import json
 def get_geo_features(region_name):
     mapping = {
         "dehradun": ("Forest", "Loam"),

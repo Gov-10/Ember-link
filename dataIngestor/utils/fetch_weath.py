@@ -1,3 +1,5 @@
+import requests
+import json
 def fetch_weather(lat, lon):
     url = (
         "https://api.open-meteo.com/v1/forecast"

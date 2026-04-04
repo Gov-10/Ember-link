@@ -1,3 +1,6 @@
+import requests
+import os
+import json
 def fetch_satellite(lat, lon):
     url = (
         "https://power.larc.nasa.gov/api/temporal/point"

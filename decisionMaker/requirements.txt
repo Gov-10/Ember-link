@@ -1,2 +1,5 @@
 fastapi
 uvicorn
+requests
+twilio
+langchain-groq

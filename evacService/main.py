@@ -7,14 +7,13 @@ from google.cloud import pubsub_v1
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-PROJECT_ID = os.getenv("PROJECT_ID")
-ML_SUBSCRIPTION = os.getenv("ML_SUBSCRIPTION")
-EVAC_TOPIC = os.getenv("EVAC_TOPIC_ID")
+credentials_path="/home/govind/Ember-link/bright-raceway-468304-e1-d7622ad6eb37.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"]=credentials_path
 NINJA_API_URL = os.getenv("NINJA_API_URL")
 subscriber = pubsub_v1.SubscriberClient()
 publisher = pubsub_v1.PublisherClient()
-subscription_path = subscriber.subscription_path(PROJECT_ID, ML_SUBSCRIPTION)
-evac_topic_path = publisher.topic_path(PROJECT_ID, EVAC_TOPIC)
+subscription_path = os.getenv("SUBSCRIPTION1_PATH")
+evac_topic_path = os.getenv("EVAC_TOPIC")
 GRAPH_CACHE = {}
 
 def get_graph(region, coords):
@@ -40,16 +39,26 @@ def get_ngos():
         logger.error(str(e))
         return []
 
-def block_flooded_roads(G, flood_coords, radius=800):
+def block_flooded_roads(G, flood_coords, radius=200):
     try:
         flood_node = ox.nearest_nodes(G, flood_coords[1], flood_coords[0])
-        nodes_to_remove = nx.single_source_dijkstra_path_length(
+
+        nodes_to_affect = nx.single_source_dijkstra_path_length(
             G, flood_node, cutoff=radius, weight='length'
         ).keys()
+
         G_blocked = G.copy()
-        G_blocked.remove_nodes_from(nodes_to_remove)
-        logger.info(f"Blocked {len(list(nodes_to_remove))} nodes")
+        edges_to_remove = []
+
+        for node in nodes_to_affect:
+            for u, v, k in G.edges(node, keys=True):
+                edges_to_remove.append((u, v, k))
+
+        G_blocked.remove_edges_from(edges_to_remove)
+
+        logger.info(f"Soft-blocked {len(edges_to_remove)} edges")
         return G_blocked
+
     except Exception as e:
         logger.error(f"Road blocking error: {e}")
         return G
@@ -78,44 +87,68 @@ def calculate_evac_route(G, start_coords, shelters):
 def callback(message):
     try:
         data = json.loads(message.data.decode("utf-8"))
-        if data.get("res") != "HIGH":
+
+        if data.get("risk_level") != "HIGH":
             message.ack()
             return
+
         region = data.get("region")
         lat = data.get("latitude")
         lon = data.get("longitude")
+
         if not (region and lat and lon):
             logger.warning("Missing location data")
             message.ack()
             return
+
         shelters = get_safe_shelters(region)
-        ngos=get_ngos()
+        ngos = get_ngos()
+
         if not shelters:
             logger.warning("No shelters available")
             message.ack()
             return
+
         start = (lat, lon)
         G = get_graph(region, start)
         G_blocked = block_flooded_roads(
             G,
             flood_coords=start,
-            radius=800
+            radius=150
         )
+
         route, target, distance = calculate_evac_route(
             G_blocked,
             start,
             shelters
         )
+
+        graph_used = G_blocked  # default
+
+    
         if not target or not route:
-            logger.warning("No valid evacuation route found")
+            logger.warning("⚠️ No route in blocked graph, falling back...")
+            route, target, distance = calculate_evac_route(
+                G,
+                start,
+                shelters
+                )
+            graph_used = G
+
+        
+        if not target or not route:
+            logger.warning("Route nhi hai ji....")
             message.ack()
             return
+
+    
         route_coords = [
-            (G_blocked.nodes[n]['y'], G_blocked.nodes[n]['x'])
+            (graph_used.nodes[n]['y'], graph_used.nodes[n]['x'])
             for n in route
         ]
+
         output = {
-            "risk": data.get("res"),
+            "risk": data.get("risk_level"),
             "region": region,
             "target_shelter": target['name'],
             "distance_m": distance,
@@ -123,12 +156,15 @@ def callback(message):
             "ngos": ngos,
             "instructions": f"Proceed to {target['name']}. Distance: {round(distance/1000, 2)} km"
         }
+
         publisher.publish(
             evac_topic_path,
             json.dumps(output).encode("utf-8")
         )
+
         logger.info(f"Evac Plan Generated for {region}")
         message.ack()
+
     except Exception as e:
         logger.error(f"Error: {e}")
         message.nack()
@@ -143,6 +179,7 @@ def start_sub():
         callback=callback,
         flow_control=flow_control
     )
+    logger.info(f"SUBSCR PATH: {subscription_path}")
     logger.info("Evac Service Running...")
 
 @app.get("/health")

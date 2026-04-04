@@ -1,3 +1,5 @@
+import requests
+import json
 def compute_signals(weather, sat):
     rainfall = weather["rainfall"] + sat["satellite_rainfall"]
     return {

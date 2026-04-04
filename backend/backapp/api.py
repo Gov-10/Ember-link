@@ -21,7 +21,7 @@ def chek(request):
 @api.post("/fill", auth=CustomAuth())
 def fillNgo(request, payload:FillSchema):
     user=request.auth
-    if user["role"] != "ngo":
+    if user.role != "ngo":
         raise HttpError(403, "Not allowed to perform this action")
     org_name=payload.org_name
     ambulances=payload.ambulances
@@ -46,13 +46,33 @@ def list_shelters(request, region:str):
 
 @api.get("/ngos", response=List[NgoSchema])
 def list_ngos(request):
-    ngo=NGOProfile.objects.all()
-    return ngo
+    ngo=NGOProfile.objects.select_related("user")
+    return [
+        {
+            "org_name": n.org_name,
+            "phone": n.user.phone,
+            "base_latitude": n.base_latitude,
+            "base_longitude": n.base_longitude,
+            "ambulances": n.ambulances,
+            "food_pac": n.food_pac,
+            "volunteers": n.volunteers,
+        }
+        for n in ngo
+    ]
 
 @api.get("/users", response=List[EmberSchema])
 def list_users(request, role:str):
     us=EmberUser.objects.filter(role=role)
-    return us
+    return [
+        {
+            "role": u.role,
+            "phone": u.phone,
+            "latitude": u.latitude,
+            "longitude": u.longitude,
+            "created_at": u.created_at,
+        }
+        for u in us
+    ]
 
 
 

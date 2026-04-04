@@ -22,6 +22,7 @@ class NgoSchema(Schema):
     base_longitude:float
     ambulances:int
     food_pac:int
+    phone:str
     volunteers:int
 
 class EmberSchema(Schema):

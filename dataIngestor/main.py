@@ -14,16 +14,16 @@ from utils.geo_mapping import get_geo_features
 from utils.fetch_elev import fetch_elevation
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+USE_MOCK=os.getenv("USE_MOCK")
 load_dotenv()
 import random 
 import asyncio
 from fastapi import FastAPI
 app = FastAPI()
-
-PROJECT_ID=os.getenv("PROJECT_ID")
-TOPIC_ID=os.getenv("TOPIC_ID")
+credentials_path="/home/govind/Ember-link/bright-raceway-468304-e1-d7622ad6eb37.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"]=credentials_path
 publisher = pubsub_v1.PublisherClient()
-topic_path = publisher.topic_path(PROJECT_ID, TOPIC_ID)
+topic_path = os.getenv("TOPIC_PATH")
 PUBLISH_INTERVAL = 900
 REGIONS = [
     {"name": "dehradun", "lat": 30.3165, "lon": 78.0322},
@@ -82,7 +82,7 @@ async def ingest_loop():
                         "Elevation (m)": elev,
                         "Land Cover": geo["land_cover"],
                         "Soil Type": geo["soil_type"],
-                        "Population_Density": 300,
+                        "Population Density": 300,
                         "Infrastructure": 0,
                         "Historical Floods": 1,
                         "Latitude": region["lat"],
