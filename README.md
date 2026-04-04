@@ -17,6 +17,105 @@
 2. Backend Services: Django Ninja, FastAPI
 3. Messaging: Twilio
 4. Authentication: Amazon Cognito
-5. Caching: Redis
-6. Queue System: GCP PubS
-7. Other Tools: Amazon API Gateway (Rate Limiting), AWS Lambda
+5. Caching: Redis, Cloudflare workers (for caching external API results)
+6. Queue System: GCP Pub/Sub
+8. Other Tools: Amazon API Gateway (Rate Limiting), AWS Lambda
+
+## Setup 
+1. Cloning and virtual env setup
+   ```bash
+   git clone https://github.com/Gov-10/Ember-link
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+2. Frontend
+   ```bash
+   cd front
+   npm install
+   npm run dev
+   ```
+3. Django Ninja
+   ```bash
+   cd backend
+   pip3 install -r requirements.txt
+   python3 manage.py migrate
+   daphne backend.asgi:application
+   ```
+4. dataIngestor
+   ```bash
+   cd dataIngestor
+   pip3 install -r requirements.txt
+   uvicorn main:app --reload --port 8001
+   ```
+5. decisionMaker
+   ```bash
+   cd decisionMaker
+   pip3 install -r requirements.txt
+   uvicorn main:app --reload --port 8002
+   ```
+6. evacService
+   ```bash
+   cd evacService
+   pip3 install -r requirements.txt
+   uvicorn main:app --reload --port 8003
+   ```
+7. predictionService
+   ```bash
+   cd predictionService
+   pip3 install -r requirements.txt
+   uvicorn main:app --reload --port 8004
+   ```
+8. worker
+   ```bash
+   cd worker
+   pip3 install -r requirements.txt
+   uvicorn worker:app --reload --port 8005
+   ```
+   
+## Environment Variables
+1. Frontend
+   ```bash
+   NEXT_PUBLIC_USER_POOL_ID
+   NEXT_PUBLIC_USER_POOL_CLIENT_ID
+   ```
+2. Django Ninja
+   ```bash
+   COGNITO_REGION
+   USER_POOL_ID
+   USER_POOL_CLIENT_ID
+   REDIS_HOST
+   REDIS_PASSWORD
+   REDIS_PORT
+   ```
+3. Data Ingestor
+   ```bash
+   TOPIC_PATH
+   USE_MOCK=True
+   ```
+4. Decision Maker
+   ```bash
+   SUBSCRIPTION2_PATH
+   HISTORY_TOPIC
+   GROQ_API_KEY
+   NINJA_API_URL
+   ACCOUNT_SID
+   AUTH_TOKEN
+   COMPANY_NUMBER
+   ```
+5. Prediction Service
+   ```bash
+   SUBSCRIPTION_PATH
+   ML_TOPIC
+   ```
+6. Worker
+   ```bash
+   FINAL_SUB
+   COGNITO_REGION
+   USER_POOL_ID
+   USER_POOL_CLIENT_ID
+   REDIS_HOST
+   REDIS_PORT
+   REDIS_PASSWORD
+   ```
+
+   
